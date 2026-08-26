@@ -12,6 +12,8 @@ Create a Pages project from this repository with the following settings:
 
 If using a custom deploy command, use `pnpm run deploy:pages` after the build. The script includes the Pages project name. Do not use `npx wrangler deploy`, which deploys a Workers application and requires a newer Vite integration.
 
+For a custom deploy command, add a `CLOUDFLARE_API_TOKEN` secret to the build environment. The token must belong to the account that owns the project and have **Account > Cloudflare Pages > Edit** permission. The token is separate from the public `VITE_*` variables below.
+
 Add these variables in the Pages project under **Settings > Environment variables** for both Preview and Production:
 
 ```text
