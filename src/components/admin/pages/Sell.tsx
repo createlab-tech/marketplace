@@ -20,10 +20,15 @@ export default function Sell() {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [modelFile, setModelFile] = useState<File | null>(null);
   const [formats, setFormats] = useState<string[]>([]);
   const [isFree, setIsFree] = useState(false);
   const [licenseType, setLicenseType] = useState('Standard');
   const [saleType, setSaleType] = useState<'digital' | 'physical'>('digital');
+  const [shippingCost, setShippingCost] = useState('');
+  const [shippingDetails, setShippingDetails] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -44,6 +49,34 @@ export default function Sell() {
     setFormats((prev) => prev.includes(fmt) ? prev.filter((f) => f !== fmt) : [...prev, fmt]);
   };
 
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(imageUrl);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreview(previewUrl);
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [imageFile, imageUrl]);
+
+  const uploadToStorage = async (file: File, bucket: string, folder: string) => {
+    const safeFileName = file.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._-]/g, '');
+    const path = `${folder}/${Date.now()}-${safeFileName}`;
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+
+    if (error) {
+      if (error.message.toLowerCase().includes('bucket not found')) {
+        throw new Error(`Storage bucket "${bucket}" was not found. Create it in Supabase Dashboard > Storage and make sure it is public.`);
+      }
+      throw new Error(error.message);
+    }
+
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -52,51 +85,82 @@ export default function Sell() {
     }
     setError('');
 
-    if (!title.trim() || !description.trim() || !category || !imageUrl.trim()) {
+    if (!title.trim() || !description.trim() || !category) {
       setError('Please fill in all required fields.');
+      return;
+    }
+    if (!imageUrl.trim() && !imageFile) {
+      setError('Please upload a preview image or provide an image URL.');
       return;
     }
     if (!isFree && (!price || parseFloat(price) < 0)) {
       setError('Please enter a valid price or mark as free.');
       return;
     }
+    if (saleType === 'digital' && !modelFile) {
+      setError('Please upload your 3D model file for digital listings.');
+      return;
+    }
     if (saleType === 'digital' && formats.length === 0) {
       setError('Please select at least one file format for digital models.');
+      return;
+    }
+    if (saleType === 'physical' && shippingCost && parseFloat(shippingCost) < 0) {
+      setError('Shipping cost cannot be negative.');
       return;
     }
 
     setLoading(true);
     const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
 
-    const { error: insertError } = await supabase.from('models').insert({
-      title: title.trim(),
-      slug,
-      description: description.trim(),
-      price: isFree ? 0 : parseFloat(price),
-      category_id: category,
-      seller_id: null,
-      image_url: imageUrl.trim(),
-      gallery: [imageUrl.trim()],
-      file_formats: saleType === 'digital' ? formats : [],
-      is_free: isFree,
-      license_type: licenseType,
-      sale_type: saleType,
-      is_physical: saleType === 'physical',
-      textures: true,
-      rigged: false,
-      animated: false,
-    });
+    try {
+      let uploadedImageUrl = imageUrl.trim();
+      if (imageFile) {
+        uploadedImageUrl = await uploadToStorage(imageFile, 'model-images', 'previews');
+      }
 
-    setLoading(false);
+      let uploadedModelUrl = null as string | null;
+      if (modelFile) {
+        uploadedModelUrl = await uploadToStorage(modelFile, 'model-files', 'models');
+      }
 
-    if (insertError) {
-      setError(insertError.message);
-      return;
+      const { error: insertError } = await supabase.from('models').insert({
+        title: title.trim(),
+        slug,
+        description: description.trim(),
+        price: isFree ? 0 : parseFloat(price),
+        category_id: category,
+        seller_id: null,
+        image_url: uploadedImageUrl,
+        gallery: [uploadedImageUrl],
+        file_formats: saleType === 'digital' ? formats : [],
+        file_url: uploadedModelUrl,
+        is_free: isFree,
+        license_type: licenseType,
+        sale_type: saleType,
+        is_physical: saleType === 'physical',
+        shipping_cost: saleType === 'physical' ? parseFloat(shippingCost || '0') : 0,
+        shipping_details: saleType === 'physical' ? shippingDetails.trim() || null : null,
+        textures: true,
+        rigged: false,
+        animated: false,
+      });
+
+      setLoading(false);
+
+      if (insertError) {
+        setError(insertError.message);
+        return;
+      }
+
+      setSuccess(true);
+      setTitle(''); setDescription(''); setPrice(''); setCategory(''); setImageUrl(''); setImageFile(null); setImagePreview(''); setModelFile(null); setFormats([]); setIsFree(false); setLicenseType('Standard'); setSaleType('digital'); setShippingCost(''); setShippingDetails('');
+      setTimeout(() => navigate(`/model/${slug}`), 2000);
+    } catch (uploadError) {
+      setLoading(false);
+      const message = uploadError instanceof Error ? uploadError.message : 'File upload failed.';
+      setError(message);
     }
-
-    setSuccess(true);
-    setTitle(''); setDescription(''); setPrice(''); setCategory(''); setImageUrl(''); setFormats([]); setIsFree(false); setLicenseType('Standard'); setSaleType('digital');
-    setTimeout(() => navigate(`/model/${slug}`), 2000);
   };
 
   if (!user) {
@@ -265,12 +329,33 @@ export default function Sell() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               <ImageIcon className="w-4 h-4 inline mr-1" />
-              Preview Image URL *
+              Preview Image *
             </label>
-            <input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="input" placeholder="https://example.com/model-preview.jpg" />
-            {imageUrl && (
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                setImageFile(file);
+                if (file) {
+                  setImageUrl('');
+                }
+              }}
+              className="input file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-medium"
+            />
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => {
+                setImageUrl(e.target.value);
+                if (e.target.value.trim()) setImageFile(null);
+              }}
+              className="input mt-3"
+              placeholder="Or paste an image URL: https://example.com/model-preview.jpg"
+            />
+            {imagePreview && (
               <div className="mt-3 rounded-lg overflow-hidden border border-gray-200 max-w-xs">
-                <img src={imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
               </div>
             )}
           </div>
@@ -279,39 +364,66 @@ export default function Sell() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FileBox className="w-4 h-4 inline mr-1" />
-                File Formats *
+                3D Model File *
               </label>
-              <div className="flex flex-wrap gap-2">
-                {['FBX', 'OBJ', 'BLEND', 'ZTL', 'STL', 'GLB', '3DS', 'DWG', '3DM'].map((fmt) => (
-                  <button
-                    key={fmt}
-                    type="button"
-                    onClick={() => toggleFormat(fmt)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                      formats.includes(fmt)
-                        ? 'border-primary-600 bg-primary-600 text-white'
-                        : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    {fmt}
-                  </button>
-                ))}
+              <input
+                type="file"
+                accept=".fbx,.obj,.blend,.stl,.glb,.gltf,.zip,.3ds,.dwg,.3dm"
+                onChange={(e) => setModelFile(e.target.files?.[0] ?? null)}
+                className="input file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-medium"
+              />
+              {modelFile && <p className="mt-2 text-sm text-gray-600">Selected file: {modelFile.name}</p>}
+              <div className="mt-4">
+                <div className="text-xs font-medium text-gray-700 mb-2">File Formats *</div>
+                <div className="flex flex-wrap gap-2">
+                  {['FBX', 'OBJ', 'BLEND', 'ZTL', 'STL', 'GLB', '3DS', 'DWG', '3DM'].map((fmt) => (
+                    <button
+                      key={fmt}
+                      type="button"
+                      onClick={() => toggleFormat(fmt)}
+                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        formats.includes(fmt)
+                          ? 'border-primary-600 bg-primary-600 text-white'
+                          : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {fmt}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {saleType === 'physical' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Physical Item Details
-              </label>
-              <textarea
-                value={description}
-                readOnly
-                className="input bg-gray-50 text-gray-600"
-                rows={2}
-                placeholder="Use the description above to mention size, material, finish, and shipping notes."
-              />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Shipping Cost (USD)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={shippingCost}
+                  onChange={(e) => setShippingCost(e.target.value)}
+                  className="input"
+                  placeholder="12.50"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Shipping & Packaging Details
+                </label>
+                <textarea
+                  value={shippingDetails}
+                  onChange={(e) => setShippingDetails(e.target.value)}
+                  className="input"
+                  rows={3}
+                  placeholder="Example: Ships in 3-5 business days, packed in recyclable material, ships worldwide, item is hand-finished and may vary slightly."
+                />
+              </div>
             </div>
           )}
         </div>

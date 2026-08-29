@@ -218,6 +218,13 @@ export default function ModelDetail() {
               <span className="text-sm text-gray-500">· {model.is_physical ? 'Physical Item' : `${model.license_type} License`}</span>
             </div>
 
+            {model.is_physical && (
+              <div className="mt-4 rounded-lg border border-primary-200 bg-primary-50/40 p-3 text-sm text-gray-700">
+                <div className="font-medium text-gray-900">Shipping: ${model.shipping_cost.toFixed(2)}</div>
+                {model.shipping_details && <p className="mt-1 text-gray-600">{model.shipping_details}</p>}
+              </div>
+            )}
+
             <div className="flex gap-3 mt-4">
               {!inCart ? (
                 <button
@@ -338,6 +345,7 @@ export default function ModelDetail() {
               {[
                 ['Category', model.categories?.name ?? 'N/A'],
                 ['Sale Type', model.is_physical ? 'Physical Item' : 'Digital Model'],
+                ['Shipping', model.is_physical ? `$${model.shipping_cost.toFixed(2)}` : 'N/A'],
                 ['File Formats', model.file_formats.join(', ') || 'N/A'],
                 ['Polygons', model.polygons.toLocaleString()],
                 ['Vertices', model.vertices.toLocaleString()],

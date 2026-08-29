@@ -28,6 +28,7 @@ export interface Model {
   image_url: string;
   gallery: string[];
   file_formats: string[];
+  file_url?: string | null;
   polygons: number;
   vertices: number;
   textures: boolean;
@@ -35,6 +36,8 @@ export interface Model {
   animated: boolean;
   sale_type: 'digital' | 'physical';
   is_physical: boolean;
+  shipping_cost: number;
+  shipping_details: string | null;
   license_type: string;
   rating: number;
   review_count: number;
