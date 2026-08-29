@@ -1,1 +1,1 @@
-export { supabase } from '../components/lib/supabase';
+export { isSupabaseConfigured, supabase } from '../components/lib/supabase';

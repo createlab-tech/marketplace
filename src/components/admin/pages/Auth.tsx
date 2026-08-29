@@ -1,10 +1,17 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
+function getRedirectTarget(redirect: string | null, fallback = '/dashboard') {
+  const plan = new URLSearchParams(window.location.search).get('plan') ?? 'pro';
+  if (redirect === 'cart') return '/cart';
+  if (redirect === 'payment') return `/payment?plan=${plan}`;
+  return fallback;
+}
+
 export function SignIn() {
-  const { signIn } = useAuth();
+  const { user, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
@@ -12,6 +19,12 @@ export function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      navigate(getRedirectTarget(redirect));
+    }
+  }, [user, navigate, redirect]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,7 +35,7 @@ export function SignIn() {
     if (error) {
       setError(error);
     } else {
-      navigate(redirect === 'cart' ? '/cart' : '/dashboard');
+      navigate(getRedirectTarget(redirect));
     }
   };
 

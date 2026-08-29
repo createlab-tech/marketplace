@@ -49,7 +49,7 @@ export default function About() {
           We believe that great 3D content should be accessible to everyone. Whether you're building the next blockbuster game, designing a dream home, or creating immersive AR experiences, CreateLab connects you with the assets you need and the creators who make them.
         </p>
         <p className="text-gray-600 leading-relaxed text-lg mt-4">
-          For creators, we offer a fair and transparent platform to monetize their skills. With a 70% revenue share, instant payouts, and zero listing fees, we make sure our artists are rewarded for their talent.
+          For creators, we offer a fair and transparent platform to monetize their skills. The free tier keeps 70% of sales, with higher payout tiers available as sellers grow, plus instant payouts and zero listing fees.
         </p>
       </section>
 
@@ -59,7 +59,7 @@ export default function About() {
         <div className="grid md:grid-cols-3 gap-6">
           {[
             { title: 'Quality First', desc: 'Every model on our platform is reviewed to ensure it meets our quality standards before it reaches buyers.' },
-            { title: 'Fair to Creators', desc: 'We give 70% of every sale back to the artist. No hidden fees, no surprise charges. Just fair compensation.' },
+            { title: 'Fair to Creators', desc: 'The free tier gives sellers 70% of each sale, with higher payout rates available on paid plans. No hidden fees, no surprise charges.' },
             { title: 'Community Driven', desc: 'We are building more than a marketplace. We are building a community where creators can learn, grow, and succeed together.' },
           ].map((val, i) => (
             <div key={i} className="card p-6">

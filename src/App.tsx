@@ -15,6 +15,7 @@ import Favorites from '@/pages/Favorites';
 import About from '@/pages/About';
 import Contact from '@/pages/Contact';
 import Pricing from '@/pages/Pricing';
+import Payment from '@/pages/Payment';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminOverview from '@/pages/admin/AdminOverview';
 import AdminModels from '@/pages/admin/AdminModels';
@@ -69,6 +70,7 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/payment" element={<Payment />} />
                     <Route path="*" element={
                       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
                         <h1 className="text-4xl font-bold text-gray-900">404</h1>

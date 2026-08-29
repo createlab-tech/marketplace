@@ -3,7 +3,14 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Users, Download, Shield, Star, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Model, Category } from '@/lib/types';
+import { SITE_CATEGORIES } from '@/data/categories';
 import ModelCard from '@/components/ModelCard';
+import { formatSellerPayout } from '@/lib/pricing';
+
+const fallbackCategories: Category[] = SITE_CATEGORIES.map((category) => ({
+  ...category,
+  created_at: new Date().toISOString(),
+})) as Category[];
 
 export default function Home() {
   const [featuredModels, setFeaturedModels] = useState<Model[]>([]);
@@ -20,17 +27,11 @@ export default function Home() {
       ]);
       setFeaturedModels(featuredRes.data ?? []);
       setFreeModels(freeRes.data ?? []);
-      setCategories(catRes.data ?? []);
+      setCategories(catRes.data && catRes.data.length > 0 ? catRes.data : fallbackCategories);
       setLoading(false);
     };
     fetchData();
   }, []);
-
-  const categoryIcons: Record<string, string> = {
-    'Users': '👤', 'Car': '🚗', 'Building2': '🏗️', 'Armchair': '🪑',
-    'Sparkles': '✨', 'Sword': '⚔️', 'Trees': '🌳', 'Shapes': '🔷',
-    'Bot': '🤖', 'Gem': '💎'
-  };
 
   return (
     <div>
@@ -73,30 +74,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats bar */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { icon: Download, label: 'Models Available', value: '50K+' },
-              { icon: Users, label: 'Active Creators', value: '12K+' },
-              { icon: TrendingUp, label: 'Downloads', value: '2.5M+' },
-              { icon: Star, label: 'Avg. Rating', value: '4.8/5' },
-            ].map((stat, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
-                  <stat.icon className="w-6 h-6 text-primary-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-sm text-gray-500">{stat.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Categories */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-center justify-between mb-8">
@@ -116,7 +93,7 @@ export default function Home() {
               className="card p-5 text-center hover:border-primary-300 hover:bg-primary-50/50 group"
             >
               <div className="w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">
-                {categoryIcons[cat.icon] ?? '📦'}
+                {cat.icon || '📦'}
               </div>
               <h3 className="font-semibold text-sm text-gray-900 group-hover:text-primary-700">{cat.name}</h3>
             </Link>
@@ -193,8 +170,8 @@ export default function Home() {
             </div>
             <div className="flex gap-4">
               <div className="text-center">
-                <p className="text-3xl font-bold text-white">70%</p>
-                <p className="text-sm text-primary-200">Revenue Share</p>
+                <p className="text-3xl font-bold text-white">{formatSellerPayout('free')}</p>
+                <p className="text-sm text-primary-200">Free Tier Payout</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-white">24h</p>
@@ -215,7 +192,7 @@ export default function Home() {
           {[
             { icon: Shield, title: 'Secure Licensing', desc: 'Every model comes with clear, standard licensing for commercial and personal use.' },
             { icon: Download, title: 'Instant Download', desc: 'Get immediate access to your purchased models with no waiting time.' },
-            { icon: Users, title: 'Creator Community', desc: 'Join a thriving community of 12,000+ 3D artists and creators worldwide.' },
+            { icon: Users, title: 'Creator Community', desc: 'Join a thriving community of 3D artists and creators worldwide.' },
           ].map((item, i) => (
             <div key={i} className="text-center p-6">
               <div className="w-14 h-14 mx-auto rounded-xl bg-primary-50 flex items-center justify-center mb-4">

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Model, Category as CategoryType } from '@/lib/types';
+import { SITE_CATEGORIES } from '@/data/categories';
 import ModelCard from '@/components/ModelCard';
 
 export default function CategoryPage() {
@@ -16,18 +17,26 @@ export default function CategoryPage() {
     const fetchCategory = async () => {
       setLoading(true);
       const { data: cat } = await supabase.from('categories').select('*').eq('slug', slug).maybeSingle();
-      setCategory(cat);
+      const fallbackCategory = SITE_CATEGORIES.find((item) => item.slug === slug);
+      const activeCategory = cat ?? (fallbackCategory ? { ...fallbackCategory, created_at: new Date().toISOString() } as CategoryType : null);
+      setCategory(activeCategory);
 
-      if (cat) {
-        let q = supabase.from('models').select('*, categories(*), sellers(*)').eq('category_id', cat.id);
-        if (sort === 'rating') q = q.order('rating', { ascending: false });
-        else if (sort === 'price-low') q = q.order('price', { ascending: true });
-        else if (sort === 'price-high') q = q.order('price', { ascending: false });
-        else if (sort === 'downloads') q = q.order('download_count', { ascending: false });
-        else q = q.order('created_at', { ascending: false });
+      if (activeCategory) {
+        if (cat) {
+          let q = supabase.from('models').select('*, categories(*), sellers(*)').eq('category_id', cat.id);
+          if (sort === 'rating') q = q.order('rating', { ascending: false });
+          else if (sort === 'price-low') q = q.order('price', { ascending: true });
+          else if (sort === 'price-high') q = q.order('price', { ascending: false });
+          else if (sort === 'downloads') q = q.order('download_count', { ascending: false });
+          else q = q.order('created_at', { ascending: false });
 
-        const { data } = await q;
-        setModels(data ?? []);
+          const { data } = await q;
+          setModels(data ?? []);
+        } else {
+          setModels([]);
+        }
+      } else {
+        setModels([]);
       }
       setLoading(false);
     };

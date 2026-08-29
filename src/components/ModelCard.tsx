@@ -51,7 +51,10 @@ export default function ModelCard({ model }: { model: Model }) {
         {model.is_free && (
           <span className="absolute top-3 left-3 badge bg-success-500 text-white">FREE</span>
         )}
-        {model.rigged && (
+        {model.is_physical && (
+          <span className="absolute top-3 right-3 badge bg-primary-600 text-white">Physical</span>
+        )}
+        {model.rigged && !model.is_physical && (
           <span className="absolute top-3 right-3 badge bg-gray-900/80 text-white">Rigged</span>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">

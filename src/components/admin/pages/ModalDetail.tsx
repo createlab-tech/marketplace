@@ -215,7 +215,7 @@ export default function ModelDetail() {
               ) : (
                 <span className="text-3xl font-bold text-gray-900">${model.price.toFixed(2)}</span>
               )}
-              <span className="text-sm text-gray-500">· {model.license_type} License</span>
+              <span className="text-sm text-gray-500">· {model.is_physical ? 'Physical Item' : `${model.license_type} License`}</span>
             </div>
 
             <div className="flex gap-3 mt-4">
@@ -247,8 +247,8 @@ export default function ModelDetail() {
             {[
               { icon: Box, label: 'Polygons', value: model.polygons.toLocaleString() },
               { icon: Eye, label: 'Vertices', value: model.vertices.toLocaleString() },
-              { icon: FileBox, label: 'Formats', value: model.file_formats.join(', ') },
-              { icon: Shield, label: 'License', value: model.license_type },
+              { icon: FileBox, label: 'Formats', value: model.file_formats.join(', ') || 'N/A' },
+              { icon: Shield, label: 'Sale Type', value: model.is_physical ? 'Physical' : model.license_type },
             ].map((spec, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-200">
                 <spec.icon className="w-5 h-5 text-primary-600 shrink-0" />
@@ -337,13 +337,14 @@ export default function ModelDetail() {
             <dl className="space-y-2 text-sm">
               {[
                 ['Category', model.categories?.name ?? 'N/A'],
-                ['File Formats', model.file_formats.join(', ')],
+                ['Sale Type', model.is_physical ? 'Physical Item' : 'Digital Model'],
+                ['File Formats', model.file_formats.join(', ') || 'N/A'],
                 ['Polygons', model.polygons.toLocaleString()],
                 ['Vertices', model.vertices.toLocaleString()],
                 ['Textures', model.textures ? 'Yes' : 'No'],
                 ['Rigged', model.rigged ? 'Yes' : 'No'],
                 ['Animated', model.animated ? 'Yes' : 'No'],
-                ['License', model.license_type],
+                ['License', model.is_physical ? 'Physical Sale' : model.license_type],
                 ['Published', new Date(model.created_at).toLocaleDateString()],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-4">

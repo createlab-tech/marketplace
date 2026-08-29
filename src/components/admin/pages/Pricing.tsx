@@ -1,5 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Check, X, Sparkles, ArrowRight } from 'lucide-react';
+import { SELLER_PAYOUTS, formatSellerPayout } from '@/lib/pricing';
+
+const planLinks: Record<string, string> = {
+  Free: '/shop',
+  Pro: '/payment?plan=pro',
+  Studio: '/contact',
+};
 
 export default function Pricing() {
   const plans = [
@@ -9,11 +16,10 @@ export default function Pricing() {
       period: 'forever',
       desc: 'Perfect for trying out CreateLab',
       features: [
-        { text: 'Browse all 50K+ models', included: true },
         { text: 'Download free models', included: true },
         { text: 'Save favorites', included: true },
         { text: 'Community support', included: true },
-        { text: 'Sell models (70% revenue)', included: true },
+        { text: `Sell models (${formatSellerPayout('free')} revenue)`, included: true },
         { text: 'Priority support', included: false },
         { text: 'Extended license', included: false },
       ],
@@ -27,11 +33,10 @@ export default function Pricing() {
       desc: 'For professionals and studios',
       features: [
         { text: 'Everything in Free', included: true },
-        { text: '20% off all paid models', included: true },
         { text: 'Extended license included', included: true },
         { text: 'Priority customer support', included: true },
         { text: 'Early access to new models', included: true },
-        { text: 'Sell models (80% revenue)', included: true },
+        { text: `Sell models (${formatSellerPayout('pro')} revenue)`, included: true },
         { text: 'API access', included: false },
       ],
       cta: 'Start Pro Trial',
@@ -44,12 +49,11 @@ export default function Pricing() {
       desc: 'For teams and large studios',
       features: [
         { text: 'Everything in Pro', included: true },
-        { text: '30% off all paid models', included: true },
         { text: 'Team seats (up to 10)', included: true },
         { text: 'Dedicated account manager', included: true },
         { text: 'API access', included: true },
         { text: 'Custom licensing options', included: true },
-        { text: 'Sell models (85% revenue)', included: true },
+        { text: `Sell models (${formatSellerPayout('studio')} revenue)`, included: true },
       ],
       cta: 'Contact Sales',
       highlight: false,
@@ -91,7 +95,7 @@ export default function Pricing() {
                 <span className="text-sm text-gray-500">/{plan.period}</span>
               </div>
               <Link
-                to={plan.name === 'Studio' ? '/contact' : '/signup'}
+                to={planLinks[plan.name] ?? '/pricing'}
                 className={`mt-6 w-full ${plan.highlight ? 'btn-primary' : 'btn-secondary'} flex`}
               >
                 {plan.cta} <ArrowRight className="w-4 h-4" />

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -30,36 +30,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id);
-      } else {
+    const syncAuthState = async (nextSession: Session | null) => {
+      try {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+
+        if (nextSession?.user) {
+          await checkAdmin(nextSession.user.id);
+        } else {
+          setIsAdmin(false);
+        }
+      } catch {
+        setUser(nextSession?.user ?? null);
+        setIsAdmin(false);
+      } finally {
         setLoading(false);
       }
-    });
+    };
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id);
-      } else {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        void syncAuthState(session);
+      })
+      .catch(() => {
+        setUser(null);
+        setSession(null);
         setIsAdmin(false);
         setLoading(false);
-      }
+      });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      void syncAuthState(session);
     });
 
     return () => listener.subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) return { error: 'Supabase is not configured.' };
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   };
 
   const signUp = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) return { error: 'Supabase is not configured.' };
     const { error } = await supabase.auth.signUp({ email, password });
     return { error: error?.message ?? null };
   };

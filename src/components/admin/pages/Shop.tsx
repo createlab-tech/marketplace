@@ -3,7 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Model, Category } from '@/lib/types';
+import { SITE_CATEGORIES } from '@/data/categories';
 import ModelCard from '@/components/ModelCard';
+
+const fallbackCategories: Category[] = SITE_CATEGORIES.map((category) => ({
+  ...category,
+  created_at: new Date().toISOString(),
+})) as Category[];
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,7 +27,7 @@ export default function Shop() {
   useEffect(() => {
     const fetchCategories = async () => {
       const { data } = await supabase.from('categories').select('*').order('name');
-      setCategories(data ?? []);
+      setCategories((data && data.length > 0) ? data : fallbackCategories);
     };
     fetchCategories();
   }, []);

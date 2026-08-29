@@ -33,6 +33,8 @@ export interface Model {
   textures: boolean;
   rigged: boolean;
   animated: boolean;
+  sale_type: 'digital' | 'physical';
+  is_physical: boolean;
   license_type: string;
   rating: number;
   review_count: number;
