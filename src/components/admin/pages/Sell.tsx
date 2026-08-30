@@ -61,6 +61,31 @@ export default function Sell() {
     return () => URL.revokeObjectURL(previewUrl);
   }, [imageFile, imageUrl]);
 
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedModelExtensions = ['.fbx', '.obj', '.blend', '.stl', '.glb', '.gltf', '.zip', '.3ds', '.dwg', '.3dm'];
+
+  const validateUploadedFile = (file: File, type: 'image' | 'model') => {
+    const fileName = file.name.toLowerCase();
+    const ext = fileName.slice(fileName.lastIndexOf('.'));
+
+    if (type === 'image') {
+      if (!allowedImageTypes.includes(file.type) && !['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+        throw new Error('Please upload a valid image file: JPG, PNG, or WEBP.');
+      }
+      if (file.size > 3 * 1024 * 1024) {
+        throw new Error('Image file is too large. Please keep it under 3 MB.');
+      }
+      return;
+    }
+
+    if (!allowedModelExtensions.includes(ext) && !['application/zip', 'application/octet-stream', 'model/gltf-binary', 'application/json'].includes(file.type)) {
+      throw new Error('Unsupported 3D file type. Please upload FBX, OBJ, STL, GLB, GLTF, ZIP, 3DS, DWG, or 3DM.');
+    }
+    if (file.size > 250 * 1024 * 1024) {
+      throw new Error('Model file is too large. Please keep it under 250 MB.');
+    }
+  };
+
   const uploadToStorage = async (file: File, bucket: string, folder: string) => {
     const safeFileName = file.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._-]/g, '');
     const path = `${folder}/${Date.now()}-${safeFileName}`;
@@ -116,12 +141,12 @@ export default function Sell() {
     try {
       let uploadedImageUrl = imageUrl.trim();
       if (imageFile) {
-        uploadedImageUrl = await uploadToStorage(imageFile, 'model-images', 'previews');
+        uploadedImageUrl = await uploadToStorage(imageFile, 'images', 'previews');
       }
 
       let uploadedModelUrl = null as string | null;
       if (modelFile) {
-        uploadedModelUrl = await uploadToStorage(modelFile, 'model-files', 'models');
+        uploadedModelUrl = await uploadToStorage(modelFile, 'stl-files', 'models');
       }
 
       const { error: insertError } = await supabase.from('models').insert({
@@ -130,7 +155,7 @@ export default function Sell() {
         description: description.trim(),
         price: isFree ? 0 : parseFloat(price),
         category_id: category,
-        seller_id: null,
+        seller_id: user.id,
         image_url: uploadedImageUrl,
         gallery: [uploadedImageUrl],
         file_formats: saleType === 'digital' ? formats : [],
@@ -333,12 +358,19 @@ export default function Sell() {
             </label>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               onChange={(e) => {
                 const file = e.target.files?.[0] ?? null;
-                setImageFile(file);
-                if (file) {
-                  setImageUrl('');
+                try {
+                  if (file) validateUploadedFile(file, 'image');
+                  setImageFile(file);
+                  if (file) {
+                    setImageUrl('');
+                  }
+                } catch (validationError) {
+                  const message = validationError instanceof Error ? validationError.message : 'Invalid image file.';
+                  setError(message);
+                  setImageFile(null);
                 }
               }}
               className="input file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-medium"
@@ -369,7 +401,17 @@ export default function Sell() {
               <input
                 type="file"
                 accept=".fbx,.obj,.blend,.stl,.glb,.gltf,.zip,.3ds,.dwg,.3dm"
-                onChange={(e) => setModelFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  try {
+                    if (file) validateUploadedFile(file, 'model');
+                    setModelFile(file);
+                  } catch (validationError) {
+                    const message = validationError instanceof Error ? validationError.message : 'Invalid model file.';
+                    setError(message);
+                    setModelFile(null);
+                  }
+                }}
                 className="input file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-medium"
               />
               {modelFile && <p className="mt-2 text-sm text-gray-600">Selected file: {modelFile.name}</p>}
