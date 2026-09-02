@@ -167,3 +167,64 @@ CREATE INDEX IF NOT EXISTS idx_models_slug ON models(slug);
 CREATE INDEX IF NOT EXISTS idx_reviews_model ON reviews(model_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+==> Cloning from https://github.com/createlab-tech/marketplace
+==> Checking out commit f45d26c9989b149da56d543d512ba8781b95ef48 in branch main
+==> Downloaded 31MB in 6s. Extraction took 1s.
+==> Installing dependencies with pnpm...
+==> Using Node.js version 24.14.1 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+ ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/package.json
+Note that in CI environments this setting is true by default. If you still need to run install in such cases, use "pnpm install --no-frozen-lockfile"
+  Failure reason:
+  specifiers in the lockfile don't match specifiers in package.json:
+* 2 dependencies were added: @supabase/server@^1.4.1, @supabase/ssr@^0.12.5
+* 1 dependencies are mismatched:
+  - @supabase/supabase-js (lockfile: ^2.57.4, manifest: ^2.112.4)==> Cloning from https://github.com/createlab-tech/marketplace
+==> Checking out commit f45d26c9989b149da56d543d512ba8781b95ef48 in branch main
+==> Downloaded 31MB in 6s. Extraction took 1s.
+==> Installing dependencies with pnpm...
+==> Using Node.js version 24.14.1 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+ ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/package.json
+Note that in CI environments this setting is true by default. If you still need to run install in such cases, use "pnpm install --no-frozen-lockfile"
+  Failure reason:
+  specifiers in the lockfile don't match specifiers in package.json:
+* 2 dependencies were added: @supabase/server@^1.4.1, @supabase/ssr@^0.12.5
+* 1 dependencies are mismatched:
+  - @supabase/supabase-js (lockfile: ^2.57.4, manifest: ^2.112.4)==> Cloning from https://github.com/createlab-tech/marketplace
+==> Checking out commit f45d26c9989b149da56d543d512ba8781b95ef48 in branch main
+==> Downloaded 31MB in 6s. Extraction took 1s.
+==> Installing dependencies with pnpm...
+==> Using Node.js version 24.14.1 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+ ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/package.json
+Note that in CI environments this setting is true by default. If you still need to run install in such cases, use "pnpm install --no-frozen-lockfile"
+  Failure reason:
+  specifiers in the lockfile don't match specifiers in package.json:
+* 2 dependencies were added: @supabase/server@^1.4.1, @supabase/ssr@^0.12.5
+* 1 dependencies are mismatched:
+  - @supabase/supabase-js (lockfile: ^2.57.4, manifest: ^2.112.4)==> Cloning from https://github.com/createlab-tech/marketplace
+==> Checking out commit f45d26c9989b149da56d543d512ba8781b95ef48 in branch main
+==> Downloaded 31MB in 6s. Extraction took 1s.
+==> Installing dependencies with pnpm...
+==> Using Node.js version 24.14.1 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+ ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/package.json
+Note that in CI environments this setting is true by default. If you still need to run install in such cases, use "pnpm install --no-frozen-lockfile"
+  Failure reason:
+  specifiers in the lockfile don't match specifiers in package.json:
+* 2 dependencies were added: @supabase/server@^1.4.1, @supabase/ssr@^0.12.5
+* 1 dependencies are mismatched:
+  - @supabase/supabase-js (lockfile: ^2.57.4, manifest: ^2.112.4)==> Cloning from https://github.com/createlab-tech/marketplace
+==> Checking out commit f45d26c9989b149da56d543d512ba8781b95ef48 in branch main
+==> Downloaded 31MB in 6s. Extraction took 1s.
+==> Installing dependencies with pnpm...
+==> Using Node.js version 24.14.1 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+ ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/package.json
+Note that in CI environments this setting is true by default. If you still need to run install in such cases, use "pnpm install --no-frozen-lockfile"
+  Failure reason:
+  specifiers in the lockfile don't match specifiers in package.json:
+* 2 dependencies were added: @supabase/server@^1.4.1, @supabase/ssr@^0.12.5
+* 1 dependencies are mismatched:
+  - @supabase/supabase-js (lockfile: ^2.57.4, manifest: ^2.112.4)
