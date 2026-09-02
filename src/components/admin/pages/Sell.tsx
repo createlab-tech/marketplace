@@ -88,18 +88,17 @@ export default function Sell() {
 
   const uploadToStorage = async (file: File, bucket: string, folder: string) => {
     const safeFileName = file.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._-]/g, '');
-    const path = `${folder}/${Date.now()}-${safeFileName}`;
+    const path = folder ? `${folder}/${safeFileName}` : safeFileName;
     const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
 
     if (error) {
       if (error.message.toLowerCase().includes('bucket not found')) {
-        throw new Error(`Storage bucket "${bucket}" was not found. Create it in Supabase Dashboard > Storage and make sure it is public.`);
+        throw new Error(`Storage bucket "${bucket}" was not found. Create it in Supabase Dashboard > Storage.`);
       }
       throw new Error(error.message);
     }
 
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return data.publicUrl;
+    return path;
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -141,12 +140,12 @@ export default function Sell() {
     try {
       let uploadedImageUrl = imageUrl.trim();
       if (imageFile) {
-        uploadedImageUrl = await uploadToStorage(imageFile, 'images', 'previews');
+        uploadedImageUrl = await uploadToStorage(imageFile, 'model-images', `${user.id}/previews`);
       }
 
-      let uploadedModelUrl = null as string | null;
+      let uploadedModelPath = null as string | null;
       if (modelFile) {
-        uploadedModelUrl = await uploadToStorage(modelFile, 'stl-files', 'models');
+        uploadedModelPath = await uploadToStorage(modelFile, 'model-files', user.id);
       }
 
       const { error: insertError } = await supabase.from('models').insert({
@@ -159,7 +158,8 @@ export default function Sell() {
         image_url: uploadedImageUrl,
         gallery: [uploadedImageUrl],
         file_formats: saleType === 'digital' ? formats : [],
-        file_url: uploadedModelUrl,
+        file_path: uploadedModelPath,
+        file_url: uploadedModelPath,
         is_free: isFree,
         license_type: licenseType,
         sale_type: saleType,

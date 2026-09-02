@@ -28,6 +28,7 @@ export interface Model {
   image_url: string;
   gallery: string[];
   file_formats: string[];
+  file_path?: string | null;
   file_url?: string | null;
   polygons: number;
   vertices: number;
