@@ -6,7 +6,7 @@ This project is ready to deploy as a Render static site.
 
 Create a new Render Static Site from this repository with these settings:
 
-- Build command: `pnpm install --frozen-lockfile && pnpm build`
+- Build command: `npm ci && npm run build`
 - Publish directory: `dist`
 - Node version: `20` or newer
 
@@ -22,12 +22,12 @@ The repo also includes a `render.yaml` file with a rewrite rule so direct visits
 ## Local development
 
 ```bash
-pnpm install
-pnpm dev
+npm ci
+npm run dev
 ```
 
 ## Production build
 
 ```bash
-pnpm build
+npm run build
 ```

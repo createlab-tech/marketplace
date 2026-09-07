@@ -2,7 +2,7 @@ services:
   - type: web
     name: marketplace
     runtime: static
-    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: VITE_SUPABASE_URL
