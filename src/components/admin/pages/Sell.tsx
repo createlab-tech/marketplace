@@ -63,6 +63,12 @@ export default function Sell() {
 
   const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
   const allowedModelExtensions = ['.fbx', '.obj', '.blend', '.stl', '.glb', '.gltf', '.zip', '.3ds', '.dwg', '.3dm'];
+  const imageMimeTypes: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+  };
 
   const validateUploadedFile = (file: File, type: 'image' | 'model') => {
     const fileName = file.name.toLowerCase();
@@ -89,7 +95,9 @@ export default function Sell() {
   const uploadToStorage = async (file: File, bucket: string, folder: string) => {
     const safeFileName = file.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._-]/g, '');
     const path = folder ? `${folder}/${safeFileName}` : safeFileName;
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    const contentType = (imageMimeTypes[extension] ?? file.type) || 'application/octet-stream';
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType });
 
     if (error) {
       if (error.message.toLowerCase().includes('bucket not found')) {
@@ -140,7 +148,8 @@ export default function Sell() {
     try {
       let uploadedImageUrl = imageUrl.trim();
       if (imageFile) {
-        uploadedImageUrl = await uploadToStorage(imageFile, 'model-images', `${user.id}/previews`);
+        const imagePath = await uploadToStorage(imageFile, 'model-images', `${user.id}/previews`);
+        uploadedImageUrl = supabase.storage.from('model-images').getPublicUrl(imagePath).data.publicUrl;
       }
 
       let uploadedModelPath = null as string | null;
@@ -148,18 +157,56 @@ export default function Sell() {
         uploadedModelPath = await uploadToStorage(modelFile, 'model-files', user.id);
       }
 
+      const { data: seller, error: sellerLookupError } = await supabase
+        .from('sellers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (sellerLookupError) {
+        throw new Error(sellerLookupError.message);
+      }
+
+      let sellerId = seller?.id;
+      if (!sellerId) {
+        const sellerName = user.email?.split('@')[0] || 'Seller';
+        const sellerSlug = `${sellerName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${user.id.slice(0, 8)}`;
+        const { data: createdSeller, error: sellerInsertError } = await supabase
+          .from('sellers')
+          .insert({ name: sellerName, slug: sellerSlug, user_id: user.id })
+          .select('id')
+          .single();
+
+        if (sellerInsertError) {
+          throw new Error(sellerInsertError.message);
+        }
+        sellerId = createdSeller.id;
+      }
+
+      const { data: categoryRecord, error: categoryError } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', category)
+        .maybeSingle();
+
+      if (categoryError) {
+        throw new Error(categoryError.message);
+      }
+      if (!categoryRecord) {
+        throw new Error('The selected category is not available yet. Please refresh and try again.');
+      }
+
       const { error: insertError } = await supabase.from('models').insert({
         title: title.trim(),
         slug,
         description: description.trim(),
         price: isFree ? 0 : parseFloat(price),
-        category_id: category,
-        seller_id: user.id,
+        category_id: categoryRecord.id,
+        seller_id: sellerId,
         image_url: uploadedImageUrl,
         gallery: [uploadedImageUrl],
         file_formats: saleType === 'digital' ? formats : [],
-        file_path: uploadedModelPath,
-        file_url: uploadedModelPath,
+        external_url: uploadedModelPath,
         is_free: isFree,
         license_type: licenseType,
         sale_type: saleType,
@@ -358,12 +405,13 @@ export default function Sell() {
             </label>
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
               onChange={(e) => {
                 const file = e.target.files?.[0] ?? null;
                 try {
                   if (file) validateUploadedFile(file, 'image');
                   setImageFile(file);
+                  setError('');
                   if (file) {
                     setImageUrl('');
                   }
