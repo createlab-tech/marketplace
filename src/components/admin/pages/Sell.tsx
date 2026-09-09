@@ -103,6 +103,10 @@ export default function Sell() {
       if (error.message.toLowerCase().includes('bucket not found')) {
         throw new Error(`Storage bucket "${bucket}" was not found. Create it in Supabase Dashboard > Storage.`);
       }
+      if (error.message.toLowerCase().includes('maximum allowed size')) {
+        const limit = bucket === 'model-images' ? '10 MB' : '500 MB';
+        throw new Error(`This file exceeds the ${limit} ${bucket === 'model-images' ? 'preview image' : 'model'} limit.`);
+      }
       throw new Error(error.message);
     }
 
