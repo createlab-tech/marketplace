@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Twitter, Facebook, Instagram, Youtube } from 'lucide-react';
+import { Twitter, Facebook, Instagram, Youtube, Send } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -21,17 +21,20 @@ export default function Footer() {
               The marketplace for 3D artists and creators. Buy and sell high-quality 3D models for games, film, architecture, and more.
             </p>
             <div className="flex gap-3 mt-4">
-              <a href="#" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="Twitter">
+              <a href="https://x.com/Create_Lab_" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="X">
                 <Twitter className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="Facebook">
+              <a href="https://www.facebook.com/profile.php?id=61590628205434" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="Facebook">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="Instagram">
+              <a href="https://www.instagram.com/createlab.tech" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="Instagram">
                 <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="YouTube">
+              <a href="https://www.youtube.com/@CreateLabTech" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="YouTube">
                 <Youtube className="w-4 h-4" />
+              </a>
+              <a href="https://t.me/createlab3D" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors" aria-label="Telegram">
+                <Send className="w-4 h-4" />
               </a>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Category } from '@/lib/types';
-import { SITE_CATEGORIES } from '@/data/categories';
+import { SITE_CATEGORIES, getCategoryImage } from '@/data/categories';
 
 const fallbackCategories: Category[] = SITE_CATEGORIES.map((category) => ({
   ...category,
@@ -57,8 +57,8 @@ export default function Categories() {
               to={`/category/${cat.slug}`}
               className="card p-6 hover:border-primary-300 hover:bg-primary-50/30 group"
             >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                {cat.icon || '📦'}
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 mb-4 group-hover:scale-110 transition-transform">
+                <img src={getCategoryImage(cat.slug)} alt={`${cat.name} category`} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <h3 className="font-semibold text-gray-900 group-hover:text-primary-700">{cat.name}</h3>
               <p className="text-sm text-gray-500 mt-1">{counts[cat.id] ?? 0} models</p>

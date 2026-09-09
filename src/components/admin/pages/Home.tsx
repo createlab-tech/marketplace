@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Users, Download, Shield, Star, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Model, Category } from '@/lib/types';
-import { SITE_CATEGORIES } from '@/data/categories';
+import { SITE_CATEGORIES, getCategoryImage } from '@/data/categories';
 import ModelCard from '@/components/ModelCard';
 import { formatSellerPayout } from '@/lib/pricing';
 
@@ -92,8 +92,8 @@ export default function Home() {
               to={`/category/${cat.slug}`}
               className="card p-5 text-center hover:border-primary-300 hover:bg-primary-50/50 group"
             >
-              <div className="w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">
-                {cat.icon || '📦'}
+              <div className="w-14 h-14 mx-auto rounded-xl overflow-hidden bg-gray-100 mb-3 group-hover:scale-110 transition-transform">
+                <img src={getCategoryImage(cat.slug)} alt="" className="w-full h-full object-cover" loading="lazy" />
               </div>
               <h3 className="font-semibold text-sm text-gray-900 group-hover:text-primary-700">{cat.name}</h3>
             </Link>
