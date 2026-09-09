@@ -14,7 +14,7 @@ import Sell from '@/pages/Sell';
 import Favorites from '@/pages/Favorites';
 import About from '@/pages/About';
 import Contact from '@/pages/Contact';
-import Careers from '@/pages/Careers';
+import Supplies from '@/pages/Supplies';
 import Press from '@/pages/Press';
 import LicenseInfo from '@/pages/LicenseInfo';
 import RefundPolicy from '@/pages/RefundPolicy';
@@ -74,7 +74,7 @@ function App() {
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
-                    <Route path="/careers" element={<Careers />} />
+                    <Route path="/supplies" element={<Supplies />} />
                     <Route path="/press" element={<Press />} />
                     <Route path="/license-info" element={<LicenseInfo />} />
                     <Route path="/refund-policy" element={<RefundPolicy />} />
