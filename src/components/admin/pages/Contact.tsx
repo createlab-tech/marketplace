@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Mail, MessageSquare, MapPin, Send, Check } from 'lucide-react';
+import { Mail, MessageSquare, MapPin, Send, Check, Package, Users } from 'lucide-react';
 
 export default function Contact() {
   const [name, setName] = useState('');
@@ -18,17 +18,18 @@ export default function Contact() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Get in Touch</h1>
-        <p className="text-gray-500 mt-2 max-w-xl mx-auto">Have a question, suggestion, or need help? We'd love to hear from you.</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Contact CreateLab</h1>
+        <p className="text-gray-500 mt-2 max-w-2xl mx-auto">Have a question, need help with an order, have an idea for a project, or simply want to get in touch? We'd love to hear from you.</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Contact info */}
         <div className="space-y-4">
           {[
-            { icon: Mail, title: 'Email Us', value: 'support@createlab.tech', desc: 'We reply within 24 hours' },
-            { icon: MessageSquare, title: 'Live Chat', value: 'Available 9am-6pm EST', desc: 'Click the chat bubble' },
-            { icon: MapPin, title: 'Visit Us', value: 'San Francisco, CA', desc: 'Remote-first company' },
+            { icon: MessageSquare, title: 'General Questions', desc: 'For questions about CreateLab, our products, projects, or the platform, use the contact form and we will get back to you as soon as possible.' },
+            { icon: Package, title: 'Orders & Products', desc: 'If your question is about an order, include your order number whenever possible. This helps us get you an answer faster.' },
+            { icon: Users, title: 'Creators & Partnerships', desc: 'Interested in contributing content, collaborating on a project, or becoming part of the CreateLab community? Tell us what you are working on.' },
+            { icon: Mail, title: 'Support', desc: 'Having trouble with an account, product, download, or another part of the site? Contact us directly and we will help.' },
           ].map((item, i) => (
             <div key={i} className="card p-5">
               <div className="flex items-start gap-3">
@@ -37,8 +38,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                  <p className="text-sm text-gray-900 mt-0.5">{item.value}</p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{item.desc}</p>
                 </div>
               </div>
             </div>
@@ -77,6 +77,20 @@ export default function Contact() {
               </button>
             </form>
           </div>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto mt-12 text-center border-t border-gray-200 pt-10">
+        <h2 className="text-2xl font-bold text-gray-900">Contact CreateLab</h2>
+        <p className="mt-3 text-gray-600">
+          Email us at{' '}
+          <a href="mailto:createlab.tech@gmail.com" className="font-semibold text-primary-600 hover:text-primary-700">
+            createlab.tech@gmail.com
+          </a>
+        </p>
+        <p className="text-sm text-gray-500 mt-2">We aim to respond to inquiries within 1–2 business days.</p>
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mt-5">
+          <MapPin className="w-4 h-4 text-primary-600" /> CreateLab · Canada
         </div>
       </div>
     </div>

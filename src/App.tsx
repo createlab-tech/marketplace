@@ -14,6 +14,10 @@ import Sell from '@/pages/Sell';
 import Favorites from '@/pages/Favorites';
 import About from '@/pages/About';
 import Contact from '@/pages/Contact';
+import Careers from '@/pages/Careers';
+import Press from '@/pages/Press';
+import LicenseInfo from '@/pages/LicenseInfo';
+import RefundPolicy from '@/pages/RefundPolicy';
 import Pricing from '@/pages/Pricing';
 import Payment from '@/pages/Payment';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -69,6 +73,10 @@ function App() {
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/careers" element={<Careers />} />
+                    <Route path="/press" element={<Press />} />
+                    <Route path="/license-info" element={<LicenseInfo />} />
+                    <Route path="/refund-policy" element={<RefundPolicy />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/payment" element={<Payment />} />
                     <Route path="*" element={

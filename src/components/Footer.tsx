@@ -55,9 +55,9 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link to="/about" className="hover:text-primary-400 transition-colors">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-primary-400 transition-colors">Contact</Link></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Careers</a></li>
+              <li><Link to="/careers" className="hover:text-primary-400 transition-colors">Careers</Link></li>
               <li><a href="#" className="hover:text-primary-400 transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Press</a></li>
+              <li><Link to="/press" className="hover:text-primary-400 transition-colors">Press</Link></li>
             </ul>
           </div>
 
@@ -65,10 +65,10 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4">Support</h3>
             <ul className="space-y-2 text-sm">
               <li><Link to="/contact" className="hover:text-primary-400 transition-colors">Help Center</Link></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">License Info</a></li>
+              <li><Link to="/license-info" className="hover:text-primary-400 transition-colors">License Info</Link></li>
               <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
               <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Refund Policy</a></li>
+              <li><Link to="/refund-policy" className="hover:text-primary-400 transition-colors">Refund Policy</Link></li>
             </ul>
           </div>
         </div>
