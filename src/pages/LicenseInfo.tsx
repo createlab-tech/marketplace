@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BriefcaseBusiness, FileKey, Shield, User } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, FileKey, User } from 'lucide-react';
 
 export default function LicenseInfo() {
   return (
@@ -15,19 +15,7 @@ export default function LicenseInfo() {
       </section>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <section className="bg-amber-50 border border-amber-200 rounded-xl p-6 md:p-8">
-          <div className="flex items-start gap-4">
-            <Shield className="w-6 h-6 text-amber-700 shrink-0 mt-1" />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Important</h2>
-              <p className="text-gray-700 leading-relaxed mt-2">
-                Every model or digital product should display its applicable license before purchase or download. This is an area where we will establish the exact licensing system before launching a large marketplace.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid md:grid-cols-2 gap-6 mt-10">
+        <section className="grid md:grid-cols-2 gap-6">
           <article className="border border-gray-200 rounded-xl bg-white p-6 md:p-8">
             <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center mb-5">
               <User className="w-6 h-6 text-primary-600" />

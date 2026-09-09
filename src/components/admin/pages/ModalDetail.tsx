@@ -6,6 +6,7 @@ import type { Model, Review } from '@/lib/types';
 import { useCart } from '@/lib/cart';
 import { useAuth } from '@/lib/auth';
 import ModelCard from '@/components/ModelCard';
+import LicenseBadge from '@/components/LicenseBadge';
 
 export default function ModelDetail() {
   const { slug } = useParams();
@@ -215,7 +216,11 @@ export default function ModelDetail() {
               ) : (
                 <span className="text-3xl font-bold text-gray-900">${model.price.toFixed(2)}</span>
               )}
-              <span className="text-sm text-gray-500">· {model.is_physical ? 'Physical Item' : `${model.license_type} License`}</span>
+              {model.is_physical ? (
+                <span className="text-sm text-gray-500">· Physical Item</span>
+              ) : (
+                <LicenseBadge licenseType={model.license_type} />
+              )}
             </div>
 
             {model.is_physical && (

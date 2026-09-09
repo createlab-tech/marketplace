@@ -5,6 +5,7 @@ import { useCart } from '@/lib/cart';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
+import LicenseBadge from '@/components/LicenseBadge';
 
 export default function ModelCard({ model }: { model: Model }) {
   const { addToCart, isInCart } = useCart();
@@ -70,6 +71,11 @@ export default function ModelCard({ model }: { model: Model }) {
           <Link to={`/seller/${model.sellers.slug}`} className="text-xs text-gray-500 hover:text-primary-600 mt-1">
             by {model.sellers.name}
           </Link>
+        )}
+        {!model.is_physical && (
+          <div className="mt-2">
+            <LicenseBadge licenseType={model.license_type} />
+          </div>
         )}
 
         <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">

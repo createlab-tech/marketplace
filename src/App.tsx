@@ -18,6 +18,7 @@ import Careers from '@/pages/Careers';
 import Press from '@/pages/Press';
 import LicenseInfo from '@/pages/LicenseInfo';
 import RefundPolicy from '@/pages/RefundPolicy';
+import HelpCenter from '@/pages/HelpCenter';
 import Pricing from '@/pages/Pricing';
 import Payment from '@/pages/Payment';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -77,6 +78,7 @@ function App() {
                     <Route path="/press" element={<Press />} />
                     <Route path="/license-info" element={<LicenseInfo />} />
                     <Route path="/refund-policy" element={<RefundPolicy />} />
+                    <Route path="/help-center" element={<HelpCenter />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/payment" element={<Payment />} />
                     <Route path="*" element={
