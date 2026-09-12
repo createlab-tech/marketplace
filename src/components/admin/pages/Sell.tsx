@@ -1,9 +1,9 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { Upload, Check, AlertTriangle, DollarSign, FileBox, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import type { Category } from '@/lib/types';
+import type { Category, Model } from '@/lib/types';
 import { SITE_CATEGORIES } from '@/data/categories';
 
 const fallbackCategories: Category[] = SITE_CATEGORIES.map((category) => ({
@@ -12,9 +12,12 @@ const fallbackCategories: Category[] = SITE_CATEGORIES.map((category) => ({
 })) as Category[];
 
 export default function Sell() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { modelId } = useParams();
+  const isEditing = Boolean(modelId);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [existingModel, setExistingModel] = useState<Model | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -45,6 +48,37 @@ export default function Sell() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!user || !modelId) return;
+    supabase.from('models').select('*, categories(*), sellers(*)').eq('id', modelId).maybeSingle().then(({ data, error: modelError }) => {
+      if (modelError) {
+        setError(modelError.message);
+        return;
+      }
+      if (!data) {
+        setError('The model could not be found.');
+        return;
+      }
+      if (!isAdmin && data.sellers?.user_id !== user.id) {
+        setError('You can only edit your own uploads.');
+        return;
+      }
+      setExistingModel(data as Model);
+      setTitle(data.title);
+      setDescription(data.description ?? '');
+      setPrice(data.price ? String(data.price) : '');
+      setCategory(data.category_id ?? '');
+      setImageUrl(data.image_url);
+      setImagePreview(data.image_url);
+      setFormats(data.file_formats ?? []);
+      setIsFree(data.is_free);
+      setLicenseType(data.license_type ?? 'Standard');
+      setSaleType(data.sale_type ?? (data.is_physical ? 'physical' : 'digital'));
+      setShippingCost(data.shipping_cost ? String(data.shipping_cost) : '');
+      setShippingDetails(data.shipping_details ?? '');
+    });
+  }, [user, modelId, isAdmin]);
+
   const toggleFormat = (fmt: string) => {
     setFormats((prev) => prev.includes(fmt) ? prev.filter((f) => f !== fmt) : [...prev, fmt]);
   };
@@ -62,7 +96,7 @@ export default function Sell() {
   }, [imageFile, imageUrl]);
 
   const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  const allowedModelExtensions = ['.fbx', '.obj', '.blend', '.stl', '.glb', '.gltf', '.zip', '.3ds', '.dwg', '.3dm'];
+  const allowedModelExtensions = ['.fbx', '.obj', '.blend', '.stl', '.3mf', '.glb', '.gltf', '.zip', '.3ds', '.dwg', '.3dm', '.step', '.stp'];
   const imageMimeTypes: Record<string, string> = {
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
@@ -85,10 +119,10 @@ export default function Sell() {
     }
 
     if (!allowedModelExtensions.includes(ext) && !['application/zip', 'application/octet-stream', 'model/gltf-binary', 'application/json'].includes(file.type)) {
-      throw new Error('Unsupported 3D file type. Please upload FBX, OBJ, STL, GLB, GLTF, ZIP, 3DS, DWG, or 3DM.');
+      throw new Error('Unsupported 3D file type. Please upload FBX, OBJ, STL, 3MF, GLB, GLTF, ZIP, 3DS, DWG, 3DM, STEP, or STP.');
     }
-    if (file.size > 250 * 1024 * 1024) {
-      throw new Error('Model file is too large. Please keep it under 250 MB.');
+    if (file.size > 5 * 1024 * 1024 * 1024) {
+      throw new Error('Model file is too large. Please keep it under 5 GiB.');
     }
   };
 
@@ -104,13 +138,41 @@ export default function Sell() {
         throw new Error(`Storage bucket "${bucket}" was not found. Create it in Supabase Dashboard > Storage.`);
       }
       if (error.message.toLowerCase().includes('maximum allowed size')) {
-        const limit = bucket === 'model-images' ? '10 MB' : '500 MB';
-        throw new Error(`This file exceeds the ${limit} ${bucket === 'model-images' ? 'preview image' : 'model'} limit.`);
+        if (bucket === 'model-files') {
+          throw new Error('This model exceeds your Supabase Storage limit. The bucket allows up to 500 MB, but your project plan may have a lower global limit.');
+        }
+        throw new Error('This preview image exceeds the 10 MB image limit.');
       }
       throw new Error(error.message);
     }
 
     return path;
+  };
+
+  const uploadModelToR2 = async (file: File) => {
+    const { data: upload, error: prepareError } = await supabase.functions.invoke('create-r2-upload-url', {
+      body: { fileName: file.name, fileSize: file.size },
+    });
+    if (prepareError) throw new Error(prepareError.message);
+    if (!upload?.uploadUrl || !upload?.key) throw new Error('The model upload could not be prepared.');
+
+    let uploadResponse: Response;
+    try {
+      uploadResponse = await fetch(upload.uploadUrl, {
+        method: 'PUT',
+        body: file,
+      });
+    } catch {
+      throw new Error('The direct R2 upload was blocked. Check the R2 bucket CORS policy for this site origin.');
+    }
+    if (!uploadResponse.ok) throw new Error('The model file could not be uploaded to storage.');
+
+    const { data: verified, error: verifyError } = await supabase.functions.invoke('create-r2-upload-url', {
+      body: { action: 'complete', key: upload.key },
+    });
+    if (verifyError) throw new Error(verifyError.message);
+    if (!verified?.key) throw new Error('The model upload could not be verified.');
+    return verified as { key: string; fileSize: number | null; contentType: string | null };
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -133,7 +195,7 @@ export default function Sell() {
       setError('Please enter a valid price or mark as free.');
       return;
     }
-    if (saleType === 'digital' && !modelFile) {
+    if (saleType === 'digital' && !modelFile && !existingModel?.model_file_key) {
       setError('Please upload your 3D model file for digital listings.');
       return;
     }
@@ -156,41 +218,15 @@ export default function Sell() {
         uploadedImageUrl = supabase.storage.from('model-images').getPublicUrl(imagePath).data.publicUrl;
       }
 
-      let uploadedModelPath = null as string | null;
+      let uploadedModel = null as { key: string; fileSize: number | null; contentType: string | null } | null;
       if (modelFile) {
-        uploadedModelPath = await uploadToStorage(modelFile, 'model-files', user.id);
-      }
-
-      const { data: seller, error: sellerLookupError } = await supabase
-        .from('sellers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (sellerLookupError) {
-        throw new Error(sellerLookupError.message);
-      }
-
-      let sellerId = seller?.id;
-      if (!sellerId) {
-        const sellerName = user.email?.split('@')[0] || 'Seller';
-        const sellerSlug = `${sellerName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${user.id.slice(0, 8)}`;
-        const { data: createdSeller, error: sellerInsertError } = await supabase
-          .from('sellers')
-          .insert({ name: sellerName, slug: sellerSlug, user_id: user.id })
-          .select('id')
-          .single();
-
-        if (sellerInsertError) {
-          throw new Error(sellerInsertError.message);
-        }
-        sellerId = createdSeller.id;
+        uploadedModel = await uploadModelToR2(modelFile);
       }
 
       const { data: categoryRecord, error: categoryError } = await supabase
         .from('categories')
         .select('id')
-        .eq('slug', category)
+        .eq('id', category)
         .maybeSingle();
 
       if (categoryError) {
@@ -200,9 +236,31 @@ export default function Sell() {
         throw new Error('The selected category is not available yet. Please refresh and try again.');
       }
 
-      const { error: insertError } = await supabase.from('models').insert({
+      let sellerId = existingModel?.seller_id ?? null;
+      if (!isEditing) {
+        const { data: seller, error: sellerLookupError } = await supabase
+          .from('sellers')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (sellerLookupError) throw new Error(sellerLookupError.message);
+        sellerId = seller?.id ?? null;
+        if (!sellerId) {
+          const sellerName = user.email?.split('@')[0] || 'Seller';
+          const sellerSlug = `${sellerName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${user.id.slice(0, 8)}`;
+          const { data: createdSeller, error: sellerInsertError } = await supabase
+            .from('sellers')
+            .insert({ name: sellerName, slug: sellerSlug, user_id: user.id })
+            .select('id')
+            .single();
+          if (sellerInsertError) throw new Error(sellerInsertError.message);
+          sellerId = createdSeller.id;
+        }
+      }
+
+      const modelData = {
         title: title.trim(),
-        slug,
         description: description.trim(),
         price: isFree ? 0 : parseFloat(price),
         category_id: categoryRecord.id,
@@ -210,7 +268,12 @@ export default function Sell() {
         image_url: uploadedImageUrl,
         gallery: [uploadedImageUrl],
         file_formats: saleType === 'digital' ? formats : [],
-        external_url: uploadedModelPath,
+        ...(modelFile ? {
+          model_file_key: uploadedModel?.key ?? null,
+          model_file_name: modelFile.name,
+          model_file_size: uploadedModel?.fileSize ?? null,
+          model_file_content_type: uploadedModel?.contentType ?? null,
+        } : {}),
         is_free: isFree,
         license_type: licenseType,
         sale_type: saleType,
@@ -220,16 +283,24 @@ export default function Sell() {
         textures: true,
         rigged: false,
         animated: false,
-      });
+      };
+
+      const { error: saveError } = isEditing
+        ? await supabase.from('models').update(modelData).eq('id', modelId)
+        : await supabase.from('models').insert({ ...modelData, slug, external_url: null });
 
       setLoading(false);
 
-      if (insertError) {
-        setError(insertError.message);
+      if (saveError) {
+        setError(saveError.message);
         return;
       }
 
       setSuccess(true);
+      if (isEditing) {
+        setTimeout(() => navigate(`/model/${existingModel?.slug ?? slug}`), 1200);
+        return;
+      }
       setTitle(''); setDescription(''); setPrice(''); setCategory(''); setImageUrl(''); setImageFile(null); setImagePreview(''); setModelFile(null); setFormats([]); setIsFree(false); setLicenseType('Standard'); setSaleType('digital'); setShippingCost(''); setShippingDetails('');
       setTimeout(() => navigate(`/model/${slug}`), 2000);
     } catch (uploadError) {
@@ -256,14 +327,14 @@ export default function Sell() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Upload a 3D Model</h1>
-        <p className="text-gray-500 mt-1">Fill in the details below to list your model on CreateLab.</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{isEditing ? 'Edit 3D Model' : 'Upload a 3D Model'}</h1>
+        <p className="text-gray-500 mt-1">{isEditing ? 'Update the details for your marketplace listing.' : 'Fill in the details below to list your model on CreateLab.'}</p>
       </div>
 
       {success && (
         <div className="mb-6 flex items-center gap-2 p-4 rounded-xl bg-success-50 text-success-700 border border-success-200">
           <Check className="w-5 h-5" />
-          <p className="text-sm font-medium">Model uploaded successfully! Redirecting...</p>
+          <p className="text-sm font-medium">Model {isEditing ? 'updated' : 'uploaded'} successfully! Redirecting...</p>
         </div>
       )}
 
@@ -467,6 +538,7 @@ export default function Sell() {
                 className="input file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-medium"
               />
               {modelFile && <p className="mt-2 text-sm text-gray-600">Selected file: {modelFile.name}</p>}
+              {!modelFile && existingModel?.model_file_name && <p className="mt-2 text-sm text-gray-600">Current file: {existingModel.model_file_name}</p>}
               <div className="mt-4">
                 <div className="text-xs font-medium text-gray-700 mb-2">File Formats *</div>
                 <div className="flex flex-wrap gap-2">
@@ -524,7 +596,7 @@ export default function Sell() {
 
         <div className="flex gap-3">
           <button type="submit" disabled={loading} className="btn-primary flex-1">
-            {loading ? 'Uploading...' : 'Publish Model'}
+            {loading ? (isEditing ? 'Saving...' : 'Uploading...') : (isEditing ? 'Save Changes' : 'Publish Model')}
           </button>
           <button type="button" onClick={() => navigate(-1)} className="btn-secondary">Cancel</button>
         </div>

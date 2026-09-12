@@ -71,6 +71,7 @@ function App() {
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/sell" element={<Sell />} />
+                    <Route path="/sell/:modelId/edit" element={<Sell />} />
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />

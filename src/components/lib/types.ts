@@ -8,6 +8,7 @@ export interface Category {
 
 export interface Seller {
   id: string;
+  user_id?: string | null;
   name: string;
   slug: string;
   avatar_url: string | null;
@@ -29,6 +30,10 @@ export interface Model {
   gallery: string[];
   file_formats: string[];
   external_url?: string | null;
+  model_file_key?: string | null;
+  model_file_name?: string | null;
+  model_file_size?: number | null;
+  model_file_content_type?: string | null;
   polygons: number;
   vertices: number;
   textures: boolean;
@@ -71,6 +76,9 @@ export interface Order {
   status: string;
   created_at: string;
   stripe_payment_intent_id?: string | null;
+  paypal_order_id?: string | null;
+  paypal_capture_id?: string | null;
+  payment_provider?: 'stripe' | 'paypal' | null;
 }
 
 export interface OrderItem {

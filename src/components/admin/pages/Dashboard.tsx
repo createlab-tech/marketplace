@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Download, ShoppingBag, Heart, Upload, TrendingUp, Package, Clock } from 'lucide-react';
+import { Download, ShoppingBag, Heart, Upload, TrendingUp, Package, Clock, Pencil } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import type { Order, OrderItem, Model } from '@/lib/types';
@@ -13,15 +13,17 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [favorites, setFavorites] = useState<Model[]>([]);
+  const [uploads, setUploads] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
       setLoading(true);
-      const [ordersRes, favRes] = await Promise.all([
+      const [ordersRes, favRes, sellerRes] = await Promise.all([
         supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('favorites').select('model_id').eq('user_id', user.id),
+        supabase.from('sellers').select('id').eq('user_id', user.id).maybeSingle(),
       ]);
 
       setOrders(ordersRes.data ?? []);
@@ -36,6 +38,15 @@ export default function Dashboard() {
         const modelIds = favRes.data.map((f) => f.model_id);
         const { data: favModels } = await supabase.from('models').select('*, categories(*), sellers(*)').in('id', modelIds);
         setFavorites(favModels ?? []);
+      }
+
+      if (sellerRes.data) {
+        const { data: sellerModels } = await supabase
+          .from('models')
+          .select('*, categories(*), sellers(*)')
+          .eq('seller_id', sellerRes.data.id)
+          .order('created_at', { ascending: false });
+        setUploads(sellerModels ?? []);
       }
 
       setLoading(false);
@@ -132,6 +143,30 @@ export default function Dashboard() {
                           <p className="text-sm font-semibold text-gray-900">${Number(order.total).toFixed(2)}</p>
                           <span className="badge bg-success-50 text-success-700">{order.status}</span>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">Your Uploads</h2>
+                  <Link to="/sell" className="text-sm font-medium text-primary-600 hover:text-primary-700">Upload Model</Link>
+                </div>
+                {uploads.length === 0 ? (
+                  <p className="text-sm text-gray-500">You have not uploaded any models yet.</p>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {uploads.map((model) => (
+                      <div key={model.id} className="flex items-center justify-between gap-4 py-3">
+                        <div className="min-w-0">
+                          <Link to={`/model/${model.slug}`} className="font-medium text-gray-900 hover:text-primary-600 truncate block">{model.title}</Link>
+                          <p className="text-xs text-gray-500">{model.is_free ? 'Free' : `$${Number(model.price).toFixed(2)}`}</p>
+                        </div>
+                        <Link to={`/sell/${model.id}/edit`} className="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
+                          <Pencil className="w-3.5 h-3.5" /> Edit
+                        </Link>
                       </div>
                     ))}
                   </div>

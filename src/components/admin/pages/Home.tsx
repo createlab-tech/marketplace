@@ -42,11 +42,11 @@ export default function Home() {
           backgroundSize: 'cover',
           backgroundPosition: 'center left',
           backgroundRepeat: 'no-repeat',
-          opacity: 0.95,
-          filter: 'brightness(1.1) saturate(1.0)',
+          opacity: 1,
+          filter: 'brightness(1.2) contrast(1.05) saturate(1.05)',
           transform: 'scale(0.92)'
         }} />
-        <div className="absolute inset-0 bg-white/15" />
+        <div className="absolute inset-0 bg-white/5" />
         <div className="absolute top-20 right-10 w-72 h-72 bg-primary-500/3 rounded-full blur-3xl" />
         <div className="absolute bottom-10 left-10 w-96 h-96 bg-accent-500/3 rounded-full blur-3xl" />
 

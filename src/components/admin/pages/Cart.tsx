@@ -1,16 +1,32 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Trash2, ShoppingBag, ArrowLeft, Shield } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Cart() {
   const { items, removeFromCart, total, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const paypalOrderId = searchParams.get('token');
+    if (searchParams.get('paypal') !== 'success' || !paypalOrderId || !user) return;
+    setProcessing(true);
+    supabase.functions.invoke('capture-paypal-order', { body: { paypalOrderId } })
+      .then(async ({ data, error: captureError }) => {
+        if (captureError) throw new Error(await getFunctionErrorMessage(captureError, 'PayPal payment could not be captured.'));
+        if (!data?.success) throw new Error('PayPal payment could not be captured.');
+        clearCart();
+        navigate('/dashboard?tab=purchases&status=success', { replace: true });
+      })
+      .catch((captureError) => setError(captureError instanceof Error ? captureError.message : 'PayPal payment failed.'))
+      .finally(() => setProcessing(false));
+  }, [clearCart, navigate, searchParams, user]);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -23,32 +39,87 @@ export default function Cart() {
     setError('');
 
     try {
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({ user_id: user.id, total, status: 'completed' })
-        .select('*')
-        .single();
+      const { data, error: checkoutError } = await supabase.functions.invoke('create-checkout-session', {
+        body: { items },
+      });
 
-      if (orderError) throw orderError;
+      if (checkoutError) {
+        let message = checkoutError.message;
+        const response = 'context' in checkoutError && checkoutError.context instanceof Response
+          ? checkoutError.context
+          : null;
 
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        model_id: item.modelId,
-        model_title: item.title,
-        price: item.price,
-      }));
+        if (response) {
+          try {
+            const body = await response.clone().json() as { error?: string; message?: string };
+            message = body.error ?? body.message ?? message;
+          } catch {
+            // Keep the SDK error when the function response is not JSON.
+          }
+        }
 
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
+        if (message.toLowerCase().includes('failed to send a request')) {
+          message = 'Checkout service is unavailable. Deploy the create-checkout-session Edge Function and verify its Stripe environment variables.';
+        }
+        throw new Error(message);
+      }
 
       clearCart();
-      navigate('/dashboard?tab=purchases');
+      if (data?.freeOrder) {
+        navigate(data.redirectUrl ?? '/dashboard?tab=purchases&status=success');
+        return;
+      }
+      if (!data?.url) throw new Error('Stripe checkout could not be started.');
+
+      window.location.assign(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Checkout failed. Please try again.');
     } finally {
       setProcessing(false);
     }
   };
+
+  const handlePayPalCheckout = async () => {
+    if (!user) {
+      navigate('/signin?redirect=cart');
+      return;
+    }
+    setProcessing(true);
+    setError('');
+    try {
+      const { data, error: checkoutError } = await supabase.functions.invoke('create-paypal-order', { body: { items } });
+      if (checkoutError) {
+        let message = await getFunctionErrorMessage(checkoutError, 'PayPal checkout could not be started.');
+        if (message.toLowerCase().includes('failed to send a request')) {
+          message = 'PayPal checkout is unavailable. Deploy the create-paypal-order Edge Function and configure its PayPal secrets.';
+        }
+        throw new Error(message);
+      }
+      if (data?.freeOrder) {
+        clearCart();
+        navigate(data.redirectUrl ?? '/dashboard?tab=purchases&status=success');
+        return;
+      }
+      if (!data?.url) throw new Error('PayPal checkout could not be started.');
+      window.location.assign(data.url);
+    } catch (checkoutError) {
+      setError(checkoutError instanceof Error ? checkoutError.message : 'PayPal checkout failed.');
+      setProcessing(false);
+    }
+  };
+
+async function getFunctionErrorMessage(error: { message: string; context?: unknown }, fallback: string) {
+  const response = error.context instanceof Response ? error.context : null;
+  if (response) {
+    try {
+      const body = await response.clone().json() as { error?: string; message?: string };
+      return body.error ?? body.message ?? error.message;
+    } catch {
+      return error.message || fallback;
+    }
+  }
+  return error.message || fallback;
+}
 
   if (items.length === 0) {
     return (
@@ -131,6 +202,14 @@ export default function Cart() {
               className="btn-primary w-full mt-4"
             >
               {processing ? 'Processing...' : 'Complete Purchase'}
+            </button>
+
+            <button
+              onClick={handlePayPalCheckout}
+              disabled={processing}
+              className="w-full mt-2 rounded-lg bg-[#ffc439] px-4 py-3 font-semibold text-[#111] transition hover:bg-[#f2b900] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {processing ? 'Processing...' : 'Pay with PayPal'}
             </button>
 
             <div className="flex items-center gap-2 mt-4 text-xs text-gray-500">
